@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Kontrol Perangkat</title>
+    <style>
+        /* Gaya dasar untuk tata letak dan tampilan */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #f0f2f5;
+            color: #333;
+        }
+        .container {
+            width: 100%;
+            max-width: 400px;
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            padding: 24px;
+            box-sizing: border-box;
+        }
+        h1 {
+            text-align: center;
+            margin-top: 0;
+            margin-bottom: 24px;
+            color: #1c1e21;
+        }
+        .control-group {
+            margin-bottom: 20px;
+        }
+        .control-group h2 {
+            font-size: 1rem;
+            color: #606770;
+            margin-bottom: 8px;
+            border-bottom: 1px solid #dddfe2;
+            padding-bottom: 4px;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            font-size: 1rem;
+            border-radius: 8px;
+            border: none;
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+            margin-top: 8px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:active {
+            transform: scale(0.98);
+        }
+        button.toggled {
+            background-color: #28a745; /* Warna hijau saat aktif */
+        }
+        .status {
+            font-size: 0.9rem;
+            padding: 8px;
+            background-color: #e9ecef;
+            border-radius: 6px;
+            margin-top: 8px;
+            word-wrap: break-word;
+        }
+        .status .label {
+            font-weight: bold;
+        }
+        .volume-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .volume-control input[type="range"] {
+            flex-grow: 1;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Panel Kontrol</h1>
+
+        <!-- Grup Kontrol Izin -->
+        <div class="control-group">
+            <h2>Izin Perangkat</h2>
+            <button id="btnLokasi">Minta Akses Lokasi</button>
+            <div id="statusLokasi" class="status">
+                <span class="label">Status:</span> Belum diminta
+            </div>
+            <button id="btnAudio">Minta Akses Audio</button>
+            <div id="statusAudio" class="status">
+                <span class="label">Status:</span> Belum diminta
+            </div>
+        </div>
+
+        <!-- Grup Kontrol Fitur -->
+        <div class="control-group">
+            <h2>Fitur Perangkat</h2>
+            <button id="btnSenter">Nyalakan Senter</button>
+            <button id="btnGetar">Getarkan (Vibrate)</button>
+        </div>
+        
+        <!-- Grup Kontrol Audio -->
+        <div class="control-group">
+            <h2>Pemutar Musik</h2>
+            <audio id="player" src="https://files.catbox.moe/vmkf0p.mp3" loop></audio>
+            <button id="btnPutarMusik">Putar Musik</button>
+            <div class="volume-control">
+                <span>🔊</span>
+                <input type="range" id="volumeSlider" min="0" max="1" step="0.01" value="0.5">
+            </div>
+        </div>
+    </div>
+
+    <!-- Menghubungkan file JavaScript -->
+    <script src="function.js"></script>
+
+</body>
+</html>
