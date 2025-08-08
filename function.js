@@ -1,87 +1,169 @@
 // Menunggu hingga seluruh konten halaman dimuat sebelum menjalankan skrip
 document.addEventListener('DOMContentLoaded', () => {
 
-    // Mengambil semua elemen yang diperlukan dari HTML
-    const btnLokasi = document.getElementById('btnLokasi');
-    const statusLokasi = document.getElementById('statusLokasi');
-    const btnAudio = document.getElementById('btnAudio');
-    const statusAudio = document.getElementById('statusAudio');
-    const btnSenter = document.getElementById('btnSenter');
-    const btnGetar = document.getElementById('btnGetar');
-    const btnPutarMusik = document.getElementById('btnPutarMusik');
-    const player = document.getElementById('player');
-    const volumeSlider = document.getElementById('volumeSlider');
+    // --- PENGAMBILAN ELEMEN DOM ---
+    const elements = {
+        btnLokasi: document.getElementById('btnLokasi'),
+        statusLokasi: document.getElementById('statusLokasi'),
+        textLokasi: document.getElementById('textLokasi'),
+        badgeLokasi: document.getElementById('badgeLokasi'),
+        btnAudio: document.getElementById('btnAudio'),
+        statusAudio: document.getElementById('statusAudio'),
+        textAudio: document.getElementById('textAudio'),
+        badgeAudio: document.getElementById('badgeAudio'),
+        infoPenyimpanan: document.getElementById('infoPenyimpanan'),
+        detailLokasiWrapper: document.getElementById('detailLokasiWrapper'),
+        lokasiDetail: document.getElementById('lokasiDetail'),
+        koordinat: document.getElementById('koordinat'),
+        btnSalinLokasi: document.getElementById('btnSalinLokasi'),
+        btnSenter: document.getElementById('btnSenter'),
+        btnGetar: document.getElementById('btnGetar'),
+        btnPutarMusik: document.getElementById('btnPutarMusik'),
+        player: document.getElementById('player'),
+        volumeSlider: document.getElementById('volumeSlider'),
+    };
 
-    // Variabel untuk mengelola state senter
+    // Variabel state
     let senterAktif = false;
     let streamTrack = null;
+    let locationWatchId = null;
 
-    // --- FUNGSI-FUNGSI UTAMA ---
+    // --- FUNGSI UTILITAS ---
 
-    // 1. Fungsi untuk meminta akses lokasi
-    const mintaAksesLokasi = () => {
-        if ('geolocation' in navigator) {
-            navigator.geolocation.getCurrentPosition(
-                (posisi) => {
-                    const { latitude, longitude } = posisi.coords;
-                    const infoLokasi = `Lat: ${latitude.toFixed(4)}, Lon: ${longitude.toFixed(4)}`;
-                    statusLokasi.innerHTML = `<span class="label">Diizinkan:</span> ${infoLokasi}`;
-                    // Simpan data ke localStorage
-                    localStorage.setItem('lokasiDiizinkan', 'true');
-                    localStorage.setItem('infoLokasi', infoLokasi);
-                },
-                (error) => {
-                    statusLokasi.innerHTML = `<span class="label">Ditolak:</span> ${error.message}`;
-                    localStorage.setItem('lokasiDiizinkan', 'false');
-                }
-            );
-        } else {
-            statusLokasi.textContent = 'Geolocation tidak didukung di peramban ini.';
+    /**
+     * Memperbarui UI status izin
+     * @param {string} type - 'lokasi' atau 'audio'
+     * @param {string} state - 'granted', 'denied', atau 'prompt'
+     */
+    const updatePermissionUI = (type, state) => {
+        const textEl = (type === 'lokasi') ? elements.textLokasi : elements.textAudio;
+        const badgeEl = (type === 'lokasi') ? elements.badgeLokasi : elements.badgeAudio;
+        const buttonEl = (type === 'lokasi') ? elements.btnLokasi : elements.btnAudio;
+
+        badgeEl.className = 'status-badge'; // Reset class
+        badgeEl.classList.add(state);
+        badgeEl.textContent = state;
+        buttonEl.disabled = (state === 'denied');
+
+        switch (state) {
+            case 'granted':
+                textEl.textContent = 'Diizinkan';
+                buttonEl.style.display = 'none'; // Sembunyikan tombol jika sudah diizinkan
+                break;
+            case 'denied':
+                textEl.textContent = 'Ditolak';
+                break;
+            case 'prompt':
+                textEl.textContent = 'Perlu Izin';
+                break;
         }
     };
 
-    // 2. Fungsi untuk meminta akses audio (mikrofon)
+    /**
+     * Menghitung dan menampilkan penggunaan localStorage
+     */
+    const updatePenyimpananInfo = () => {
+        let totalBytes = 0;
+        for (let key in localStorage) {
+            if (localStorage.hasOwnProperty(key)) {
+                const value = localStorage.getItem(key);
+                totalBytes += (key.length + value.length) * 2; // Perkiraan 2 bytes per karakter
+            }
+        }
+        elements.infoPenyimpanan.innerHTML = `<span class="label">Penyimpanan Terpakai:</span> ${totalBytes.toLocaleString()} Bytes`;
+    };
+
+    // --- FUNGSI INTI ---
+
+    // 1. LOKASI
+    const tampilkanLokasi = (posisi) => {
+        elements.detailLokasiWrapper.style.display = 'block';
+        const { latitude, longitude, accuracy, altitude, altitudeAccuracy, heading, speed } = posisi.coords;
+        const detailText = `Latitude      : ${latitude}\nLongitude     : ${longitude}\nAkurasi       : ${accuracy} meter\n\nKetinggian    : ${altitude || 'N/A'} meter\nAkurasi Keting. : ${altitudeAccuracy || 'N/A'} meter\nArah          : ${heading || 'N/A'}\nKecepatan     : ${speed || 'N/A'}`;
+        
+        elements.koordinat.textContent = detailText;
+        localStorage.setItem('detailLokasi', detailText);
+        updatePenyimpananInfo();
+    };
+
+    const handleLokasiError = (error) => {
+        elements.koordinat.textContent = `Error mendapatkan lokasi: ${error.message}`;
+        if (error.code === 1) { // PERMISSION_DENIED
+            updatePermissionUI('lokasi', 'denied');
+            localStorage.setItem('permission_geolocation', 'denied');
+            updatePenyimpananInfo();
+        }
+    };
+
+    const mintaAksesLokasi = () => {
+        if ('geolocation' in navigator) {
+            if (locationWatchId) navigator.geolocation.clearWatch(locationWatchId); // Hapus listener lama
+            locationWatchId = navigator.geolocation.watchPosition(tampilkanLokasi, handleLokasiError, {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 0
+            });
+            localStorage.setItem('permission_geolocation', 'granted');
+            updatePermissionUI('lokasi', 'granted');
+        } else {
+            elements.koordinat.textContent = 'Geolocation tidak didukung di peramban ini.';
+        }
+    };
+
+    const salinLokasi = () => {
+        const textToCopy = elements.koordinat.textContent;
+        // Fallback untuk browser lama
+        const textArea = document.createElement('textarea');
+        textArea.value = textToCopy;
+        document.body.appendChild(textArea);
+        textArea.select();
+        try {
+            document.execCommand('copy');
+            alert('Detail lokasi berhasil disalin!');
+        } catch (err) {
+            alert('Gagal menyalin. Coba salin secara manual.');
+        }
+        document.body.removeChild(textArea);
+    };
+
+    // 2. AUDIO
     const mintaAksesAudio = () => {
         if ('mediaDevices' in navigator) {
             navigator.mediaDevices.getUserMedia({ audio: true })
                 .then(() => {
-                    statusAudio.innerHTML = `<span class="label">Status:</span> Akses audio diizinkan.`;
-                    localStorage.setItem('audioDiizinkan', 'true');
+                    updatePermissionUI('audio', 'granted');
+                    localStorage.setItem('permission_microphone', 'granted');
+                    updatePenyimpananInfo();
                 })
-                .catch((error) => {
-                    statusAudio.innerHTML = `<span class="label">Status:</span> Akses audio ditolak.`;
-                    localStorage.setItem('audioDiizinkan', 'false');
+                .catch(() => {
+                    updatePermissionUI('audio', 'denied');
+                    localStorage.setItem('permission_microphone', 'denied');
+                    updatePenyimpananInfo();
                 });
         } else {
-            statusAudio.textContent = 'MediaDevices tidak didukung di peramban ini.';
+            elements.textAudio.textContent = 'MediaDevices tidak didukung.';
         }
     };
 
-    // 3. Fungsi untuk menyalakan/mematikan senter
+    // 3. SENTER
     const toggleSenter = async () => {
+        // Logika senter tetap sama, karena ini adalah implementasi standar
         if ('mediaDevices' in navigator && 'getUserMedia' in navigator.mediaDevices) {
             try {
                 if (!senterAktif) {
-                    // Minta akses kamera belakang
-                    const stream = await navigator.mediaDevices.getUserMedia({
-                        video: { facingMode: 'environment' }
-                    });
+                    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
                     streamTrack = stream.getVideoTracks()[0];
-                    // Nyalakan senter
-                    await streamTrack.applyConstraints({
-                        advanced: [{ torch: true }]
-                    });
+                    await streamTrack.applyConstraints({ advanced: [{ torch: true }] });
                     senterAktif = true;
-                    btnSenter.textContent = 'Matikan Senter';
-                    btnSenter.classList.add('toggled');
+                    elements.btnSenter.textContent = 'Matikan Senter';
+                    elements.btnSenter.classList.add('toggled');
                 } else {
-                    // Matikan senter dan hentikan stream
                     streamTrack.applyConstraints({ advanced: [{ torch: false }] });
                     streamTrack.stop();
                     senterAktif = false;
                     streamTrack = null;
-                    btnSenter.textContent = 'Nyalakan Senter';
-                    btnSenter.classList.remove('toggled');
+                    elements.btnSenter.textContent = 'Nyalakan Senter';
+                    elements.btnSenter.classList.remove('toggled');
                 }
             } catch (error) {
                 alert(`Error senter: ${error.message}. Pastikan Anda menggunakan perangkat dengan senter dan memberikan izin kamera.`);
@@ -91,61 +173,76 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // 4. Fungsi untuk menggetarkan perangkat
+    // 4. GETAR
     const getarkanPerangkat = () => {
         if ('vibrate' in navigator) {
-            navigator.vibrate(200); // Getar selama 200ms
+            navigator.vibrate(200);
         } else {
             alert('Perangkat Anda tidak mendukung fitur getar.');
         }
     };
 
-    // 5. Fungsi untuk memutar atau menjeda musik
+    // 5. MUSIK
     const toggleMusik = () => {
-        if (player.paused) {
-            player.play();
-            btnPutarMusik.textContent = 'Jeda Musik';
-            btnPutarMusik.classList.add('toggled');
+        if (elements.player.paused) {
+            elements.player.play();
+            elements.btnPutarMusik.textContent = 'Jeda Musik';
+            elements.btnPutarMusik.classList.add('toggled');
         } else {
-            player.pause();
-            btnPutarMusik.textContent = 'Putar Musik';
-            btnPutarMusik.classList.remove('toggled');
+            elements.player.pause();
+            elements.btnPutarMusik.textContent = 'Putar Musik';
+            elements.btnPutarMusik.classList.remove('toggled');
         }
     };
 
-    // 6. Fungsi untuk mengatur volume
     const aturVolume = () => {
-        player.volume = volumeSlider.value;
+        elements.player.volume = elements.volumeSlider.value;
     };
 
-    // --- MEMUAT DATA DARI LOCALSTORAGE SAAT HALAMAN DIBUKA ---
-    const muatDariStorage = () => {
-        // Cek status izin lokasi
-        if (localStorage.getItem('lokasiDiizinkan') === 'true') {
-            statusLokasi.innerHTML = `<span class="label">Diizinkan:</span> ${localStorage.getItem('infoLokasi')}`;
-        } else if (localStorage.getItem('lokasiDiizinkan') === 'false') {
-            statusLokasi.innerHTML = `<span class="label">Status:</span> Pernah ditolak.`;
-        }
-
-        // Cek status izin audio
-        if (localStorage.getItem('audioDiizinkan') === 'true') {
-            statusAudio.innerHTML = `<span class="label">Status:</span> Akses audio diizinkan.`;
-        } else if (localStorage.getItem('audioDiizinkan') === 'false') {
-            statusAudio.innerHTML = `<span class="label">Status:</span> Akses audio ditolak.`;
+    // --- INISIALISASI HALAMAN ---
+    const init = () => {
+        // 1. Cek izin yang ada menggunakan Permissions API
+        if ('permissions' in navigator) {
+            // Cek Lokasi
+            navigator.permissions.query({ name: 'geolocation' }).then(result => {
+                updatePermissionUI('lokasi', result.state);
+                if (result.state === 'granted') {
+                    mintaAksesLokasi(); // Langsung aktifkan jika sudah diizinkan
+                }
+            });
+            // Cek Mikrofon
+            navigator.permissions.query({ name: 'microphone' }).then(result => {
+                updatePermissionUI('audio', result.state);
+            });
+        } else {
+            // Fallback untuk browser yang tidak mendukung Permissions API
+            // Cek dari localStorage
+            const geoPerm = localStorage.getItem('permission_geolocation');
+            if (geoPerm) updatePermissionUI('lokasi', geoPerm); else updatePermissionUI('lokasi', 'prompt');
+            const micPerm = localStorage.getItem('permission_microphone');
+            if (micPerm) updatePermissionUI('audio', micPerm); else updatePermissionUI('audio', 'prompt');
         }
         
-        // Atur volume awal dari slider
-        player.volume = volumeSlider.value;
+        // 2. Muat data dari localStorage
+        if (localStorage.getItem('detailLokasi')) {
+            elements.koordinat.textContent = localStorage.getItem('detailLokasi');
+            elements.detailLokasiWrapper.style.display = 'block';
+        }
+        
+        // 3. Atur volume awal dan update info penyimpanan
+        elements.player.volume = elements.volumeSlider.value;
+        updatePenyimpananInfo();
+
+        // 4. Tambahkan Event Listeners
+        elements.btnLokasi.addEventListener('click', mintaAksesLokasi);
+        elements.btnAudio.addEventListener('click', mintaAksesAudio);
+        elements.btnSalinLokasi.addEventListener('click', salinLokasi);
+        elements.btnSenter.addEventListener('click', toggleSenter);
+        elements.btnGetar.addEventListener('click', getarkanPerangkat);
+        elements.btnPutarMusik.addEventListener('click', toggleMusik);
+        elements.volumeSlider.addEventListener('input', aturVolume);
     };
 
-    // --- MENAMBAHKAN EVENT LISTENER KE SETIAP ELEMEN ---
-    btnLokasi.addEventListener('click', mintaAksesLokasi);
-    btnAudio.addEventListener('click', mintaAksesAudio);
-    btnSenter.addEventListener('click', toggleSenter);
-    btnGetar.addEventListener('click', getarkanPerangkat);
-    btnPutarMusik.addEventListener('click', toggleMusik);
-    volumeSlider.addEventListener('input', aturVolume);
-
-    // Panggil fungsi untuk memuat data dari storage saat halaman pertama kali dibuka
-    muatDariStorage();
+    // Jalankan inisialisasi
+    init();
 });
