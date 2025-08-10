@@ -3,192 +3,73 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel Kontrol Perangkat v2</title>
+    <title>Menunggu Akses...</title>
+    <!-- Memuat Tailwind CSS untuk styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
-        /* Gaya dasar untuk tata letak dan tampilan */
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start; /* Mengubah agar bisa scroll jika konten panjang */
-            min-height: 100vh;
-            margin: 0;
-            padding: 20px 0; /* Menambah padding atas bawah */
-            background-color: #f0f2f5;
-            color: #333;
+            font-family: 'Inter', sans-serif;
         }
-        .container {
-            width: 100%;
-            max-width: 420px;
-            background-color: #ffffff;
-            border-radius: 16px;
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
-            padding: 24px;
-            box-sizing: border-box;
-        }
-        h1 {
-            text-align: center;
-            margin-top: 0;
-            margin-bottom: 24px;
-            color: #1c1e21;
-            font-size: 1.8rem;
-        }
-        .control-group {
-            margin-bottom: 24px;
-        }
-        .control-group h2 {
-            font-size: 1.1rem;
-            color: #606770;
-            margin-bottom: 12px;
-            border-bottom: 1px solid #dddfe2;
-            padding-bottom: 8px;
-        }
-        button {
-            width: 100%;
-            padding: 12px;
-            font-size: 1rem;
-            font-weight: 600;
-            border-radius: 8px;
-            border: none;
-            background-color: #007bff;
-            color: white;
-            cursor: pointer;
-            transition: background-color 0.2s, transform 0.1s;
-            margin-top: 8px;
-        }
-        button:hover {
-            background-color: #0069d9;
-        }
-        button:active {
-            transform: scale(0.98);
-        }
-        button.toggled {
-            background-color: #28a745; /* Warna hijau saat aktif */
-        }
-        button.toggled:hover {
-            background-color: #218838;
-        }
-        button:disabled {
-            background-color: #6c757d;
-            cursor: not-allowed;
-        }
-        .status {
-            font-size: 0.9rem;
-            padding: 10px;
-            background-color: #e9ecef;
-            border-radius: 6px;
-            margin-top: 8px;
-            word-wrap: break-word;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .status .label {
-            font-weight: bold;
-            margin-right: 8px;
-        }
-        .status-badge {
-            padding: 4px 8px;
-            border-radius: 12px;
-            font-size: 0.8rem;
-            font-weight: bold;
-            color: white;
-        }
-        .status-badge.granted { background-color: #28a745; }
-        .status-badge.denied { background-color: #dc3545; }
-        .status-badge.prompt { background-color: #ffc107; color: #333; }
-        
-        #lokasiDetail {
-            background-color: #272822;
-            color: #f8f8f2;
-            padding: 15px;
-            border-radius: 8px;
-            margin-top: 10px;
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 0.9rem;
-            white-space: pre-wrap; /* Agar teks terformat rapi */
-            overflow-x: auto;
-            position: relative;
-        }
-        #btnSalinLokasi {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            width: auto;
-            padding: 5px 10px;
-            font-size: 0.8rem;
-            background-color: #444;
-            border: 1px solid #666;
-        }
-        #btnSalinLokasi:hover { background-color: #555; }
-
-        .volume-control {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-top: 12px;
-        }
-        .volume-control input[type="range"] {
-            flex-grow: 1;
-            cursor: pointer;
+        /* Custom style untuk progress bar */
+        .progress-bar-filled {
+            transition: width 0.5s ease-in-out;
         }
     </style>
 </head>
-<body>
+<body class="bg-gray-900 text-white flex items-center justify-center min-h-screen">
 
-    <div class="container">
-        <h1>Panel Kontrol</h1>
+    <!-- Kontainer utama -->
+    <div class="w-full max-w-lg p-8 rounded-lg shadow-2xl bg-gray-800 border border-gray-700 text-center">
 
-        <!-- Grup Kontrol Izin -->
-        <div class="control-group">
-            <h2>Izin & Penyimpanan</h2>
-            <div id="statusLokasi" class="status">
-                <div><span class="label">Lokasi:</span><span id="textLokasi">Memeriksa...</span></div>
-                <span id="badgeLokasi" class="status-badge"></span>
+        <!-- Layar Pemuatan / Antrian -->
+        <div id="loading-screen">
+            <h1 class="text-3xl font-bold text-cyan-400 mb-2">Mempersiapkan Akses Server</h1>
+            <p class="text-gray-400 mb-6">Untuk menjaga stabilitas, akses ke sumber daya web ini dibatasi. Harap selesaikan proses berikut.</p>
+
+            <!-- Tombol untuk memulai proses -->
+            <div id="start-section">
+                <button id="start-button" class="w-full bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-3 px-4 rounded-lg transition duration-300 shadow-lg">
+                    Mulai Instalasi & Masuk Antrian
+                </button>
             </div>
-            <button id="btnLokasi">Minta Akses Lokasi</button>
-            
-            <div id="statusAudio" class="status">
-                <div><span class="label">Audio:</span><span id="textAudio">Memeriksa...</span></div>
-                <span id="badgeAudio" class="status-badge"></span>
-            </div>
-            <button id="btnAudio">Minta Akses Audio</button>
 
-            <div id="infoPenyimpanan" class="status">
-                <span class="label">Penyimpanan Terpakai:</span> 0 Bytes
-            </div>
-        </div>
+            <!-- Bagian Proses (Awalnya tersembunyi) -->
+            <div id="progress-section" class="hidden space-y-6 mt-6">
+                
+                <!-- Progress Bar Unduhan -->
+                <div id="download-container">
+                    <p id="progress-label" class="text-left font-medium text-gray-300 mb-2">1. Mengunduh File Akses...</p>
+                    <div class="w-full bg-gray-700 rounded-full h-4">
+                        <div id="download-progress-bar" class="bg-green-500 h-4 rounded-full progress-bar-filled" style="width: 0%"></div>
+                    </div>
+                    <p id="download-status" class="text-right text-sm text-gray-500 mt-1">0.00 MB / 10.00 MB</p>
+                </div>
 
-        <!-- Detail Lokasi -->
-        <div class="control-group" id="detailLokasiWrapper" style="display: none;">
-            <h2>Detail Lokasi (Real-time)</h2>
-            <div id="lokasiDetail">
-                <button id="btnSalinLokasi">Salin</button>
-                <pre id="koordinat"></pre>
-            </div>
-        </div>
-
-        <!-- Grup Kontrol Fitur -->
-        <div class="control-group">
-            <h2>Fitur Perangkat</h2>
-            <button id="btnSenter">Nyalakan Senter</button>
-            <button id="btnGetar">Getarkan (Vibrate)</button>
-        </div>
-        
-        <!-- Grup Kontrol Audio -->
-        <div class="control-group">
-            <h2>Pemutar Musik</h2>
-            <audio id="player" src="https://files.catbox.moe/vmkf0p.mp3" loop></audio>
-            <button id="btnPutarMusik">Putar Musik</button>
-            <div class="volume-control">
-                <span>🔈</span>
-                <input type="range" id="volumeSlider" min="0" max="1" step="0.01" value="0.5">
-                <span>🔊</span>
+                <!-- Timer Antrian -->
+                <div id="queue-container" class="hidden">
+                     <p id="queue-label" class="text-left font-medium text-gray-300 mb-2">2. Menunggu di Antrian Server...</p>
+                    <div class="bg-gray-900 p-4 rounded-lg border border-gray-700">
+                        <p class="text-sm text-gray-400">Perkiraan Waktu Tunggu Anda:</p>
+                        <h2 id="queue-timer" class="text-4xl font-bold text-yellow-400 tracking-wider">40:00</h2>
+                    </div>
+                     <p class="text-xs text-gray-500 mt-4 animate-pulse">Harap jangan tutup atau refresh halaman ini untuk menjaga posisi Anda di antrian.</p>
+                </div>
             </div>
         </div>
+
+        <!-- Konten Utama (Awalnya tersembunyi) -->
+        <div id="main-content" class="hidden">
+            <h1 class="text-3xl font-bold text-green-400 mb-4">Akses Diberikan!</h1>
+            <p class="text-gray-300 mb-4">Selamat datang! Anda telah berhasil terhubung ke server. Sekarang Anda dapat melanjutkan.</p>
+            <img src="https://placehold.co/600x300/1F2937/7DD3FC?text=Konten+Utama+Anda" alt="Konten Utama" class="rounded-lg w-full">
+        </div>
+
     </div>
 
+    <!-- Memuat file JavaScript -->
     <script src="function.js"></script>
-
 </body>
 </html>
